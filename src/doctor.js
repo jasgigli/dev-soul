@@ -218,7 +218,7 @@ function checkWorkflow(profile, enabled) {
     return pass('ci workflow configured');
   }
 
-  return warn('ci workflow configured', 'Run "dev-soul ci" to create a GitHub Actions quality gate.');
+  return warn('ci workflow configured', 'Run "npx dev-soul ci" to create a GitHub Actions quality gate.');
 }
 
 function checkUsefulTestScript(packageJson) {

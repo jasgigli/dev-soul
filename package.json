@@ -1,6 +1,6 @@
 {
   "name": "dev-soul",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A portable developer environment doctor, setup assistant, and quality gate for Backend projects.",
   "type": "commonjs",
   "main": "src/index.js",

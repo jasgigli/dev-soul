@@ -5,10 +5,10 @@ const { createColors } = require('./colors');
 function formatDoctorReport(report, options = {}) {
   const color = createColors(options.color);
   const lines = [
-    color.bold('dev-soul doctor'),
+    title('dev-soul doctor', color, options),
     '',
     ...report.checks.map((check) => {
-      const marker = formatMarker(check.status, color);
+      const marker = formatMarker(check.status, color, options);
       const advice = check.advice ? `\n      ${color.gray(check.advice)}` : '';
       return `  ${marker} ${check.name}${advice}`;
     }),
@@ -23,7 +23,7 @@ function formatDoctorReport(report, options = {}) {
 function formatProjectProfile(profile, options = {}) {
   const color = createColors(options.color);
   return [
-    color.bold('dev-soul project info'),
+    title('dev-soul project info', color, options),
     '',
     `  cwd: ${profile.cwd}`,
     `  node: ${profile.node.version}`,
@@ -37,11 +37,11 @@ function formatProjectProfile(profile, options = {}) {
 function formatSetupResult(result, options = {}) {
   const color = createColors(options.color);
   if (result.actions.length === 0) {
-    return `${color.bold('dev-soul setup')}\n\n  ${color.green('Nothing to change.')} Project already has the managed defaults.`;
+    return `${title('dev-soul setup', color, options)}\n\n  ${statusWord('passed', 'Nothing to change.', color, options)} Project already has the managed defaults.`;
   }
 
   return [
-    color.bold('dev-soul setup'),
+    title('dev-soul setup', color, options),
     '',
     ...result.actions.map((action) => `  ${color.cyan(action.type.toUpperCase())} ${action.target}`)
   ].join('\n');
@@ -54,7 +54,7 @@ function formatInsights(insights, options = {}) {
     : insights.scripts.map((script) => `  ${color.cyan(script.name)}: ${script.command}`);
 
   return [
-    color.bold('dev-soul insights'),
+    title('dev-soul insights', color, options),
     '',
     `  package: ${insights.package.name || '(none)'}`,
     `  version: ${insights.package.version || '(none)'}`,
@@ -63,7 +63,7 @@ function formatInsights(insights, options = {}) {
     `  dependencies: ${insights.dependencies.production} prod, ${insights.dependencies.development} dev`,
     `  duplicate deps: ${insights.dependencies.duplicates.length ? color.yellow(insights.dependencies.duplicates.join(', ')) : color.green('none')}`,
     '',
-    color.bold('scripts'),
+    title('scripts', color, options),
     ...scripts
   ].join('\n');
 }
@@ -71,7 +71,7 @@ function formatInsights(insights, options = {}) {
 function formatEnvReport(env, options = {}) {
   const color = createColors(options.color);
   return [
-    color.bold('dev-soul env'),
+    title('dev-soul env', color, options),
     '',
     `  .env.example: ${env.example.exists ? color.green('found') : color.yellow('missing')}`,
     `  .env: ${env.local.exists ? color.green('found') : color.yellow('missing')}`,
@@ -87,11 +87,11 @@ function formatCleanResult(result, options = {}) {
   const heading = result.applied ? 'dev-soul clean' : 'dev-soul clean plan';
 
   if (result.entries.length === 0) {
-    return `${color.bold(heading)}\n\n  ${color.green('Nothing to clean.')}`;
+    return `${title(heading, color, options)}\n\n  ${statusWord('passed', 'Nothing to clean.', color, options)}`;
   }
 
   return [
-    color.bold(heading),
+    title(heading, color, options),
     '',
     ...result.entries.map((entry) => `  ${result.applied ? color.red('REMOVED') : color.yellow('WOULD REMOVE')} ${entry.target} (${entry.type})`),
     '',
@@ -104,7 +104,7 @@ function formatReadyReport(result, options = {}) {
   const status = result.ready ? color.green('READY') : color.red('NOT READY');
 
   return [
-    color.bold('dev-soul ready'),
+    title('dev-soul ready', color, options),
     '',
     `  status: ${status}`,
     `  score: ${formatScore(result.doctor.summary.score, color)}`,
@@ -118,14 +118,14 @@ function formatPlan(plan, options = {}) {
   const color = createColors(options.color);
   if (plan.items.length === 0) {
     return [
-      color.bold('dev-soul plan'),
+      title('dev-soul plan', color, options),
       '',
-      `${color.green('No action needed.')} Score: ${formatScore(plan.score, color)}`
+      `${statusWord('passed', 'No action needed.', color, options)} Score: ${formatScore(plan.score, color)}`
     ].join('\n');
   }
 
   return [
-    color.bold('dev-soul plan'),
+    title('dev-soul plan', color, options),
     '',
     `Score: ${formatScore(plan.score, color)}`,
     '',
@@ -140,13 +140,13 @@ function formatPlan(plan, options = {}) {
 function formatAudit(audit, options = {}) {
   const color = createColors(options.color);
   return [
-    color.bold('dev-soul audit'),
+    title('dev-soul audit', color, options),
     '',
     `  package: ${audit.package.name || '(none)'}`,
     `  version: ${audit.package.version || '(none)'}`,
     '',
     ...audit.findings.map((finding) => {
-      const marker = formatMarker(finding.status, color);
+      const marker = formatMarker(finding.status, color, options);
       const advice = finding.advice ? `\n      ${color.gray(finding.advice)}` : '';
       return `  ${marker} ${finding.name}${advice}`;
     }),
@@ -158,22 +158,34 @@ function formatAudit(audit, options = {}) {
 function formatBadges(badges, options = {}) {
   const color = createColors(options.color);
   return [
-    color.bold('dev-soul badges'),
+    title('dev-soul badges', color, options),
     '',
     ...badges.markdown.map((badge) => `  ${badge}`)
   ].join('\n');
 }
 
-function formatMarker(status, color) {
+function formatMarker(status, color, options = {}) {
+  if (options.plain) {
+    if (status === 'passed') {
+      return 'PASS';
+    }
+
+    if (status === 'warned') {
+      return 'WARN';
+    }
+
+    return 'FAIL';
+  }
+
   if (status === 'passed') {
-    return color.green('PASS');
+    return color.green('✓ PASS');
   }
 
   if (status === 'warned') {
-    return color.yellow('WARN');
+    return color.yellow('! WARN');
   }
 
-  return color.red('FAIL');
+  return color.red('✕ FAIL');
 }
 
 function formatScore(score, color) {
@@ -187,6 +199,30 @@ function formatScore(score, color) {
   }
 
   return color.red(value);
+}
+
+function title(value, color, options = {}) {
+  if (options.plain) {
+    return value;
+  }
+
+  return color.bold(`◆ ${value}`);
+}
+
+function statusWord(status, value, color, options = {}) {
+  if (options.plain) {
+    return value;
+  }
+
+  if (status === 'passed') {
+    return color.green(`✓ ${value}`);
+  }
+
+  if (status === 'warned') {
+    return color.yellow(`! ${value}`);
+  }
+
+  return color.red(`✕ ${value}`);
 }
 
 module.exports = {

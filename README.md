@@ -72,6 +72,14 @@ npx dev-soul ci
 npm run doctor
 ```
 
+If PowerShell says `dev-soul` is not recognized, the package is installed locally. Use:
+
+```bash
+npx dev-soul ci
+```
+
+Inside npm scripts, `dev-soul` works because npm automatically adds `node_modules/.bin` to PATH.
+
 `setup` safely creates missing defaults only. It will not overwrite existing files.
 
 It can add:
@@ -123,7 +131,7 @@ Summary: 12/15 passed, 3 warnings, 0 failures
 Score: 80/100
 ```
 
-In supported terminals, `PASS` is green, `WARN` is yellow, and `FAIL` is red. Use `--no-color` or the `NO_COLOR=1` environment variable for plain text output.
+In supported terminals, `PASS` is green, `WARN` is yellow, and `FAIL` is red. Interactive terminals also show a small progress animation while checks run. Use `--plain`, `--no-color`, `--no-animate`, or the `NO_COLOR=1` environment variable for clean logs.
 
 ## Insights
 

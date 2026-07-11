@@ -12,6 +12,7 @@ const { collectInsights } = require('./insights');
 const { createPlan } = require('./plan');
 const { createReport, formatMarkdownReport, writeMarkdownReport } = require('./report');
 const { createCiWorkflow, setupProject } = require('./setup');
+const { withProgress } = require('./ui');
 const {
   formatAudit,
   formatBadges,
@@ -32,14 +33,14 @@ async function run(argv, options = {}) {
 
   switch (command) {
     case 'doctor': {
-      const report = await runDoctor(cwd, { strict: parsed.flags.strict });
+      const report = await withProgress('checking project health', () => runDoctor(cwd, { strict: parsed.flags.strict }), uiOptions(parsed));
       print(parsed, report, () => formatDoctorReport(report, colorOptions(parsed)));
       process.exitCode = report.ok ? 0 : 1;
       return report;
     }
 
     case 'score': {
-      const report = await runDoctor(cwd, { strict: parsed.flags.strict });
+      const report = await withProgress('calculating project score', () => runDoctor(cwd, { strict: parsed.flags.strict }), uiOptions(parsed));
       print(parsed, report.summary, () => `dev-soul score\n\n  ${report.summary.score}/100`);
       process.exitCode = report.ok ? 0 : 1;
       return report.summary;
@@ -47,7 +48,7 @@ async function run(argv, options = {}) {
 
     case 'ready': {
       const [doctor, env] = await Promise.all([
-        runDoctor(cwd, { strict: parsed.flags.strict }),
+        withProgress('checking project readiness', () => runDoctor(cwd, { strict: parsed.flags.strict }), uiOptions(parsed)),
         inspectEnv(cwd)
       ]);
       const result = {
@@ -61,7 +62,7 @@ async function run(argv, options = {}) {
     }
 
     case 'plan': {
-      const plan = await createPlan(cwd, { strict: parsed.flags.strict });
+      const plan = await withProgress('building fix plan', () => createPlan(cwd, { strict: parsed.flags.strict }), uiOptions(parsed));
       print(parsed, plan, () => formatPlan(plan, colorOptions(parsed)));
       process.exitCode = plan.ok ? 0 : 1;
       return plan;
@@ -69,14 +70,14 @@ async function run(argv, options = {}) {
 
     case 'audit':
     case 'audit:package': {
-      const audit = await auditPackage(cwd);
+      const audit = await withProgress('auditing package metadata', () => auditPackage(cwd), uiOptions(parsed));
       print(parsed, audit, () => formatAudit(audit, colorOptions(parsed)));
       process.exitCode = audit.summary.failed > 0 ? 1 : 0;
       return audit;
     }
 
     case 'badges': {
-      const badges = await createBadges(cwd);
+      const badges = await withProgress('creating README badges', () => createBadges(cwd), uiOptions(parsed));
       print(parsed, badges, () => formatBadges(badges, colorOptions(parsed)));
       return badges;
     }
@@ -104,29 +105,29 @@ async function run(argv, options = {}) {
     }
 
     case 'env': {
-      const env = await inspectEnv(cwd);
+      const env = await withProgress('checking environment files', () => inspectEnv(cwd), uiOptions(parsed));
       print(parsed, env, () => formatEnvReport(env, colorOptions(parsed)));
       process.exitCode = env.ok ? 0 : 1;
       return env;
     }
 
     case 'clean': {
-      const result = await cleanProject(cwd, {
+      const result = await withProgress('scanning cleanup targets', () => cleanProject(cwd, {
         apply: parsed.flags.apply,
         nodeModules: parsed.flags['node-modules']
-      });
+      }), uiOptions(parsed));
       print(parsed, result, () => formatCleanResult(result, colorOptions(parsed)));
       return result;
     }
 
     case 'report': {
       if (parsed.flags.write) {
-        const result = await writeMarkdownReport(cwd, parsed.flags.output === true ? undefined : parsed.flags.output);
+        const result = await withProgress('writing markdown report', () => writeMarkdownReport(cwd, parsed.flags.output === true ? undefined : parsed.flags.output), uiOptions(parsed));
         print(parsed, result, () => `Wrote ${path.relative(cwd, result.path)}`);
         return result;
       }
 
-      const report = await createReport(cwd);
+      const report = await withProgress('creating project report', () => createReport(cwd), uiOptions(parsed));
       if (parsed.flags.markdown || parsed.flags.md) {
         console.log(formatMarkdownReport(report));
       } else {
@@ -144,13 +145,13 @@ async function run(argv, options = {}) {
 
     case 'setup':
     case 'fix': {
-      const result = await setupProject(cwd, { dryRun: parsed.flags['dry-run'] });
+      const result = await withProgress('preparing project defaults', () => setupProject(cwd, { dryRun: parsed.flags['dry-run'] }), uiOptions(parsed));
       print(parsed, result, () => formatSetupResult(result, colorOptions(parsed)));
       return result;
     }
 
     case 'ci': {
-      const result = await createCiWorkflow(cwd, { dryRun: parsed.flags['dry-run'] });
+      const result = await withProgress('creating CI workflow', () => createCiWorkflow(cwd, { dryRun: parsed.flags['dry-run'] }), uiOptions(parsed));
       print(parsed, result, () => formatSetupResult(result, colorOptions(parsed)));
       return result;
     }
@@ -206,7 +207,17 @@ function parseArgs(argv) {
 
 function colorOptions(parsed) {
   return {
-    color: parsed.flags.color ? true : parsed.flags['no-color'] ? false : undefined
+    color: parsed.flags.color ? true : parsed.flags['no-color'] || parsed.flags.plain ? false : undefined,
+    plain: Boolean(parsed.flags.plain)
+  };
+}
+
+function uiOptions(parsed) {
+  return {
+    animate: parsed.flags.animate ? true : parsed.flags['no-animate'] || parsed.flags.plain ? false : undefined,
+    color: colorOptions(parsed).color,
+    json: Boolean(parsed.flags.json),
+    plain: Boolean(parsed.flags.plain)
   };
 }
 
@@ -260,6 +271,8 @@ function helpText() {
     'Usage:',
     '  dev-soul doctor [--strict] [--json]   Check whether the current Node project is healthy',
     '  dev-soul doctor --no-color            Disable colored output',
+    '  dev-soul doctor --animate             Force animated progress output',
+    '  dev-soul doctor --plain               Disable color, symbols, and animation',
     '  dev-soul score [--json]               Print the project health score',
     '  dev-soul ready [--json]               Check if the project is ready to work on',
     '  dev-soul plan [--json]                Show prioritized fixes and suggested commands',
@@ -284,7 +297,11 @@ function helpText() {
     'Install:',
     '  npm install -D dev-soul',
     '  npx dev-soul setup',
-    '  npx dev-soul doctor'
+    '  npx dev-soul doctor',
+    '',
+    'Tip:',
+    '  If "dev-soul" is not recognized, run it with "npx dev-soul <command>"',
+    '  or add an npm script such as "doctor": "dev-soul doctor".'
   ].join('\n');
 }
 
@@ -292,5 +309,6 @@ module.exports = {
   helpText,
   inferCommandFromFlags,
   parseArgs,
+  uiOptions,
   run
 };
