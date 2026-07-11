@@ -18,6 +18,7 @@ const {
   formatBadges,
   formatCleanResult,
   formatDoctorReport,
+  formatDoctorSummary,
   formatEnvReport,
   formatInsights,
   formatPlan,
@@ -34,7 +35,7 @@ async function run(argv, options = {}) {
   switch (command) {
     case 'doctor': {
       const report = await withProgress('checking project health', () => runDoctor(cwd, { strict: parsed.flags.strict }), uiOptions(parsed));
-      print(parsed, report, () => formatDoctorReport(report, colorOptions(parsed)));
+      print(parsed, report, () => parsed.flags.summary ? formatDoctorSummary(report, colorOptions(parsed)) : formatDoctorReport(report, colorOptions(parsed)));
       process.exitCode = report.ok ? 0 : 1;
       return report;
     }
@@ -270,6 +271,7 @@ function helpText() {
     '',
     'Usage:',
     '  dev-soul doctor [--strict] [--json]   Check whether the current Node project is healthy',
+    '  dev-soul doctor --summary             Print a compact health summary',
     '  dev-soul doctor --no-color            Disable colored output',
     '  dev-soul doctor --animate             Force animated progress output',
     '  dev-soul doctor --plain               Disable color, symbols, and animation',

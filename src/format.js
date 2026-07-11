@@ -20,6 +20,23 @@ function formatDoctorReport(report, options = {}) {
   return lines.join('\n');
 }
 
+function formatDoctorSummary(report, options = {}) {
+  const color = createColors(options.color);
+  const status = report.ok ? statusWord('passed', 'OK', color, options) : statusWord('failed', 'NEEDS WORK', color, options);
+
+  return [
+    title('dev-soul summary', color, options),
+    '',
+    `  status: ${status}`,
+    `  score: ${formatScore(report.summary.score, color)}`,
+    `  passed: ${report.summary.passed}/${report.summary.total}`,
+    `  warnings: ${color.yellow(report.summary.warned)}`,
+    `  failures: ${color.red(report.summary.failed)}`,
+    '',
+    report.ok ? '  next: npx dev-soul ready' : '  next: npx dev-soul plan'
+  ].join('\n');
+}
+
 function formatProjectProfile(profile, options = {}) {
   const color = createColors(options.color);
   return [
@@ -230,6 +247,7 @@ module.exports = {
   formatBadges,
   formatCleanResult,
   formatDoctorReport,
+  formatDoctorSummary,
   formatEnvReport,
   formatInsights,
   formatPlan,

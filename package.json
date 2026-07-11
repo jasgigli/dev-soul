@@ -1,7 +1,7 @@
 {
   "name": "dev-soul",
-  "version": "0.6.0",
-  "description": "A portable developer environment doctor, setup assistant, and quality gate for Backend projects.",
+  "version": "0.7.0",
+  "description": "Zero-dependency developer companion, project health doctor, and CI quality gate for Node.js.",
   "type": "commonjs",
   "main": "src/index.js",
   "bin": {
@@ -38,13 +38,13 @@
   ],
   "author": "Junaid Ali Shah <overview.jjj@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/jasgigli/devai#readme",
+  "homepage": "https://github.com/jasgigli/dev-soul#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jasgigli/devai.git"
+    "url": "git+https://github.com/jasgigli/dev-soul.git"
   },
   "bugs": {
-    "url": "https://github.com/jasgigli/devai/issues"
+    "url": "https://github.com/jasgigli/dev-soul/issues"
   },
   "engines": {
     "node": ">=18.18.0"

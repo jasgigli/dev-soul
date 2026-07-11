@@ -1,4 +1,16 @@
-# dev-soul
+# dev-soul 🚀
+
+[![npm version](https://img.shields.io/npm/v/dev-soul.svg?style=flat-flat&color=cb3837)](https://www.npmjs.com/package/dev-soul)
+[![npm downloads](https://img.shields.io/npm/dm/dev-soul.svg?style=flat-flat&color=333333)](https://www.npmjs.com/package/dev-soul)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+> A zero-dependency developer companion, setup assistant, and quality gate for Node.js projects.
+
+[📦 View on NPMRegistry](https://www.npmjs.com/package/dev-soul) | [💻 GitHub Repository](https://github.com/dev-soul/dev-soul)
+
+---
+
+# Overview
 
 `dev-soul` is a zero-dependency developer companion for Node.js projects. It gives every project the same colorful health check, prioritized fix plan, setup helper, package audit, project score, environment validator, cleanup assistant, dependency overview, script explorer, report generator, badges, and CI quality gate.
 
@@ -38,6 +50,7 @@ It is useful for:
 dev-soul doctor             # validate project health
 dev-soul doctor --strict    # fail on warnings too
 dev-soul doctor --json      # machine-readable report
+dev-soul doctor --summary   # compact score and status output
 dev-soul doctor --no-color  # plain output for logs
 dev-soul score              # print a 0-100 project health score
 dev-soul ready              # check if the project is ready for work
