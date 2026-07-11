@@ -22,6 +22,9 @@ const defaultConfig = Object.freeze({
   },
   ci: {
     workflow: true
+  },
+  score: {
+    minimum: 80
   }
 });
 
@@ -65,6 +68,10 @@ function mergeConfig(base, override) {
     ci: {
       ...base.ci,
       ...(override.ci || {})
+    },
+    score: {
+      ...base.score,
+      ...(override.score || {})
     },
     source: CONFIG_FILE
   };

@@ -1,7 +1,7 @@
 {
   "name": "dev-soul",
-  "version": "0.4.0",
-  "description": "A portable developer environment doctor, setup assistant, and quality gate for Node.js projects.",
+  "version": "0.5.0",
+  "description": "A portable developer environment doctor, setup assistant, and quality gate for Backend projects.",
   "type": "commonjs",
   "main": "src/index.js",
   "bin": {
@@ -23,6 +23,8 @@
     "doctor:json": "node bin/dev-soul.js doctor --json",
     "score": "node bin/dev-soul.js score",
     "ready": "node bin/dev-soul.js ready",
+    "plan": "node bin/dev-soul.js plan",
+    "audit:package": "node bin/dev-soul.js audit",
     "prepare:local": "npm pack --dry-run"
   },
   "keywords": [
@@ -34,8 +36,16 @@
     "ci",
     "quality"
   ],
-  "author": "",
+  "author": "Junaid Ali Shah <overview.jjj@gmail.com>",
   "license": "MIT",
+  "homepage": "https://github.com/jasgigli/devai#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasgigli/devai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jasgigli/devai/issues"
+  },
   "engines": {
     "node": ">=18.18.0"
   },

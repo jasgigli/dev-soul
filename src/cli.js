@@ -2,18 +2,24 @@
 
 const path = require('node:path');
 const { collectProjectProfile } = require('./project-profile');
+const { auditPackage } = require('./audit');
+const { createBadges } = require('./badges');
 const { cleanProject } = require('./clean');
 const { createConfig, loadConfig } = require('./config');
 const { runDoctor } = require('./doctor');
 const { inspectEnv } = require('./env');
 const { collectInsights } = require('./insights');
-const { createReport, formatMarkdownReport } = require('./report');
+const { createPlan } = require('./plan');
+const { createReport, formatMarkdownReport, writeMarkdownReport } = require('./report');
 const { createCiWorkflow, setupProject } = require('./setup');
 const {
+  formatAudit,
+  formatBadges,
   formatCleanResult,
   formatDoctorReport,
   formatEnvReport,
   formatInsights,
+  formatPlan,
   formatProjectProfile,
   formatReadyReport,
   formatSetupResult
@@ -52,6 +58,27 @@ async function run(argv, options = {}) {
       print(parsed, result, () => formatReadyReport(result, colorOptions(parsed)));
       process.exitCode = result.ready ? 0 : 1;
       return result;
+    }
+
+    case 'plan': {
+      const plan = await createPlan(cwd, { strict: parsed.flags.strict });
+      print(parsed, plan, () => formatPlan(plan, colorOptions(parsed)));
+      process.exitCode = plan.ok ? 0 : 1;
+      return plan;
+    }
+
+    case 'audit':
+    case 'audit:package': {
+      const audit = await auditPackage(cwd);
+      print(parsed, audit, () => formatAudit(audit, colorOptions(parsed)));
+      process.exitCode = audit.summary.failed > 0 ? 1 : 0;
+      return audit;
+    }
+
+    case 'badges': {
+      const badges = await createBadges(cwd);
+      print(parsed, badges, () => formatBadges(badges, colorOptions(parsed)));
+      return badges;
     }
 
     case 'insights':
@@ -93,6 +120,12 @@ async function run(argv, options = {}) {
     }
 
     case 'report': {
+      if (parsed.flags.write) {
+        const result = await writeMarkdownReport(cwd, parsed.flags.output === true ? undefined : parsed.flags.output);
+        print(parsed, result, () => `Wrote ${path.relative(cwd, result.path)}`);
+        return result;
+      }
+
       const report = await createReport(cwd);
       if (parsed.flags.markdown || parsed.flags.md) {
         console.log(formatMarkdownReport(report));
@@ -229,6 +262,9 @@ function helpText() {
     '  dev-soul doctor --no-color            Disable colored output',
     '  dev-soul score [--json]               Print the project health score',
     '  dev-soul ready [--json]               Check if the project is ready to work on',
+    '  dev-soul plan [--json]                Show prioritized fixes and suggested commands',
+    '  dev-soul audit [--json]               Audit package metadata before publishing',
+    '  dev-soul badges                       Print README badges for score and Node',
     '  dev-soul insights [--json]            Print project scripts, dependencies, and package facts',
     '  dev-soul scripts [--json]             List package scripts',
     '  dev-soul deps [--json]                Summarize dependencies',
@@ -236,6 +272,7 @@ function helpText() {
     '  dev-soul clean [--apply]              Preview or remove generated caches/build output',
     '  dev-soul clean --node-modules         Include node_modules in the clean plan',
     '  dev-soul report --markdown            Print a markdown project report',
+    '  dev-soul report --write               Save dev-soul-report.md',
     '  dev-soul setup [--dry-run]            Create safe project defaults and npm scripts',
     '  dev-soul fix [--dry-run]              Alias for setup',
     '  dev-soul ci [--dry-run]               Create a GitHub Actions quality gate',

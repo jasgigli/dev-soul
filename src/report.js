@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('node:fs/promises');
+const path = require('node:path');
 const { runDoctor } = require('./doctor');
 const { inspectEnv } = require('./env');
 const { collectInsights } = require('./insights');
@@ -53,7 +55,18 @@ function formatMarkdownReport(report) {
   ].join('\n');
 }
 
+async function writeMarkdownReport(cwd, fileName = 'dev-soul-report.md') {
+  const report = await createReport(cwd);
+  const outputPath = path.resolve(cwd, fileName);
+  await fs.writeFile(outputPath, formatMarkdownReport(report) + '\n');
+  return {
+    path: outputPath,
+    report
+  };
+}
+
 module.exports = {
   createReport,
-  formatMarkdownReport
+  formatMarkdownReport,
+  writeMarkdownReport
 };

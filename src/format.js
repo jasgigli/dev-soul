@@ -114,6 +114,56 @@ function formatReadyReport(result, options = {}) {
   ].join('\n');
 }
 
+function formatPlan(plan, options = {}) {
+  const color = createColors(options.color);
+  if (plan.items.length === 0) {
+    return [
+      color.bold('dev-soul plan'),
+      '',
+      `${color.green('No action needed.')} Score: ${formatScore(plan.score, color)}`
+    ].join('\n');
+  }
+
+  return [
+    color.bold('dev-soul plan'),
+    '',
+    `Score: ${formatScore(plan.score, color)}`,
+    '',
+    ...plan.items.map((item, index) => {
+      const priority = item.priority === 'high' ? color.red('HIGH') : color.yellow('MEDIUM');
+      const command = item.command ? `\n      try: ${color.cyan(item.command)}` : '';
+      return `  ${index + 1}. ${priority} ${item.title}\n      ${color.gray(item.advice)}${command}`;
+    })
+  ].join('\n');
+}
+
+function formatAudit(audit, options = {}) {
+  const color = createColors(options.color);
+  return [
+    color.bold('dev-soul audit'),
+    '',
+    `  package: ${audit.package.name || '(none)'}`,
+    `  version: ${audit.package.version || '(none)'}`,
+    '',
+    ...audit.findings.map((finding) => {
+      const marker = formatMarker(finding.status, color);
+      const advice = finding.advice ? `\n      ${color.gray(finding.advice)}` : '';
+      return `  ${marker} ${finding.name}${advice}`;
+    }),
+    '',
+    `Summary: ${color.green(audit.summary.passed)}/${audit.summary.total} passed, ${color.yellow(audit.summary.warned)} warnings, ${color.red(audit.summary.failed)} failures`
+  ].join('\n');
+}
+
+function formatBadges(badges, options = {}) {
+  const color = createColors(options.color);
+  return [
+    color.bold('dev-soul badges'),
+    '',
+    ...badges.markdown.map((badge) => `  ${badge}`)
+  ].join('\n');
+}
+
 function formatMarker(status, color) {
   if (status === 'passed') {
     return color.green('PASS');
@@ -140,10 +190,13 @@ function formatScore(score, color) {
 }
 
 module.exports = {
+  formatAudit,
+  formatBadges,
   formatCleanResult,
   formatDoctorReport,
   formatEnvReport,
   formatInsights,
+  formatPlan,
   formatProjectProfile,
   formatReadyReport,
   formatSetupResult

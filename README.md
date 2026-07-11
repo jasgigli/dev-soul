@@ -1,6 +1,6 @@
 # dev-soul
 
-`dev-soul` is a zero-dependency developer companion for Node.js projects. It gives every project the same colorful health check, setup helper, project score, environment validator, cleanup assistant, dependency overview, script explorer, report generator, and CI quality gate.
+`dev-soul` is a zero-dependency developer companion for Node.js projects. It gives every project the same colorful health check, prioritized fix plan, setup helper, package audit, project score, environment validator, cleanup assistant, dependency overview, script explorer, report generator, badges, and CI quality gate.
 
 ## Install
 
@@ -41,6 +41,9 @@ dev-soul doctor --json      # machine-readable report
 dev-soul doctor --no-color  # plain output for logs
 dev-soul score              # print a 0-100 project health score
 dev-soul ready              # check if the project is ready for work
+dev-soul plan               # show what to fix next
+dev-soul audit              # audit package metadata before publishing
+dev-soul badges             # print README badges
 dev-soul insights           # show package, script, and dependency overview
 dev-soul scripts            # list package scripts
 dev-soul deps               # summarize dependency counts and duplicates
@@ -48,6 +51,7 @@ dev-soul env                # compare .env.example with local .env
 dev-soul clean              # preview removable build/cache output
 dev-soul clean --apply      # remove generated build/cache output
 dev-soul report --markdown  # print a markdown project report
+dev-soul report --write     # save dev-soul-report.md
 dev-soul setup              # create safe project defaults
 dev-soul setup --dry-run    # preview setup changes
 dev-soul fix                # alias for setup
@@ -79,7 +83,7 @@ It can add:
 - `README.md`
 - `dev-soul.config.json`
 - npm scripts for `doctor`, `doctor:strict`, and `doctor:json`
-- npm scripts for `score`, `ready`, `insights`, `env`, and `report`
+- npm scripts for `score`, `ready`, `plan`, `insights`, `env`, `report`, and `audit:package`
 
 ## Health checks
 
@@ -153,6 +157,26 @@ npx dev-soul ready
 
 It combines the project health check with environment readiness.
 
+## Fix Plan
+
+Use this when the project is noisy and you want the next best actions:
+
+```bash
+npx dev-soul plan
+```
+
+The plan lists failed checks first, then warnings, with suggested commands where possible.
+
+## Package Audit
+
+Before publishing an npm package:
+
+```bash
+npx dev-soul audit
+```
+
+It checks package metadata, entry points, publish allowlists, repository metadata, keywords, and common npm-readiness problems.
+
 ## Cleanup
 
 Preview generated files that can be removed:
@@ -179,6 +203,20 @@ Generate a markdown project report:
 
 ```bash
 npx dev-soul report --markdown
+```
+
+Save it:
+
+```bash
+npx dev-soul report --write
+```
+
+## Badges
+
+Print badge markdown for your README:
+
+```bash
+npx dev-soul badges
 ```
 
 ## CI
@@ -239,9 +277,12 @@ Default config:
     "doctor:json": "dev-soul doctor --json",
     "score": "dev-soul score",
     "ready": "dev-soul ready",
+    "plan": "dev-soul plan",
     "insights": "dev-soul insights",
     "env": "dev-soul env",
-    "report": "dev-soul report --markdown"
+    "report": "dev-soul report --markdown",
+    "report:write": "dev-soul report --write",
+    "audit:package": "dev-soul audit"
   }
 }
 ```

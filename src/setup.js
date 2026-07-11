@@ -60,9 +60,12 @@ async function ensurePackageScripts(cwd, actions, options) {
     'doctor:json': 'dev-soul doctor --json',
     score: 'dev-soul score',
     ready: 'dev-soul ready',
+    plan: 'dev-soul plan',
     insights: 'dev-soul insights',
     env: 'dev-soul env',
-    report: 'dev-soul report --markdown'
+    report: 'dev-soul report --markdown',
+    'report:write': 'dev-soul report --write',
+    'audit:package': 'dev-soul audit'
   };
 
   let changed = false;

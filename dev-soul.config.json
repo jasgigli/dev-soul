@@ -15,5 +15,8 @@
   },
   "ci": {
     "workflow": true
+  },
+  "score": {
+    "minimum": 80
   }
 }
