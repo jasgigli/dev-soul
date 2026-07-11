@@ -59,7 +59,10 @@ async function ensurePackageScripts(cwd, actions, options) {
     'doctor:strict': 'dev-soul doctor --strict',
     'doctor:json': 'dev-soul doctor --json',
     score: 'dev-soul score',
-    insights: 'dev-soul insights'
+    ready: 'dev-soul ready',
+    insights: 'dev-soul insights',
+    env: 'dev-soul env',
+    report: 'dev-soul report --markdown'
   };
 
   let changed = false;

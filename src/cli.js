@@ -2,11 +2,22 @@
 
 const path = require('node:path');
 const { collectProjectProfile } = require('./project-profile');
+const { cleanProject } = require('./clean');
 const { createConfig, loadConfig } = require('./config');
 const { runDoctor } = require('./doctor');
+const { inspectEnv } = require('./env');
 const { collectInsights } = require('./insights');
+const { createReport, formatMarkdownReport } = require('./report');
 const { createCiWorkflow, setupProject } = require('./setup');
-const { formatDoctorReport, formatInsights, formatProjectProfile, formatSetupResult } = require('./format');
+const {
+  formatCleanResult,
+  formatDoctorReport,
+  formatEnvReport,
+  formatInsights,
+  formatProjectProfile,
+  formatReadyReport,
+  formatSetupResult
+} = require('./format');
 
 async function run(argv, options = {}) {
   const cwd = options.cwd || process.cwd();
@@ -26,6 +37,21 @@ async function run(argv, options = {}) {
       print(parsed, report.summary, () => `dev-soul score\n\n  ${report.summary.score}/100`);
       process.exitCode = report.ok ? 0 : 1;
       return report.summary;
+    }
+
+    case 'ready': {
+      const [doctor, env] = await Promise.all([
+        runDoctor(cwd, { strict: parsed.flags.strict }),
+        inspectEnv(cwd)
+      ]);
+      const result = {
+        ready: doctor.ok && env.ok,
+        doctor,
+        env
+      };
+      print(parsed, result, () => formatReadyReport(result, colorOptions(parsed)));
+      process.exitCode = result.ready ? 0 : 1;
+      return result;
     }
 
     case 'insights':
@@ -50,8 +76,34 @@ async function run(argv, options = {}) {
       return value;
     }
 
-    case 'info':
     case 'env': {
+      const env = await inspectEnv(cwd);
+      print(parsed, env, () => formatEnvReport(env, colorOptions(parsed)));
+      process.exitCode = env.ok ? 0 : 1;
+      return env;
+    }
+
+    case 'clean': {
+      const result = await cleanProject(cwd, {
+        apply: parsed.flags.apply,
+        nodeModules: parsed.flags['node-modules']
+      });
+      print(parsed, result, () => formatCleanResult(result, colorOptions(parsed)));
+      return result;
+    }
+
+    case 'report': {
+      const report = await createReport(cwd);
+      if (parsed.flags.markdown || parsed.flags.md) {
+        console.log(formatMarkdownReport(report));
+      } else {
+        print(parsed, report, () => formatMarkdownReport(report));
+      }
+      return report;
+    }
+
+    case 'info':
+    case 'runtime': {
       const profile = await collectProjectProfile(cwd);
       print(parsed, profile, () => formatProjectProfile(profile, colorOptions(parsed)));
       return profile;
@@ -176,9 +228,14 @@ function helpText() {
     '  dev-soul doctor [--strict] [--json]   Check whether the current Node project is healthy',
     '  dev-soul doctor --no-color            Disable colored output',
     '  dev-soul score [--json]               Print the project health score',
+    '  dev-soul ready [--json]               Check if the project is ready to work on',
     '  dev-soul insights [--json]            Print project scripts, dependencies, and package facts',
     '  dev-soul scripts [--json]             List package scripts',
     '  dev-soul deps [--json]                Summarize dependencies',
+    '  dev-soul env [--json]                 Compare .env.example with local .env',
+    '  dev-soul clean [--apply]              Preview or remove generated caches/build output',
+    '  dev-soul clean --node-modules         Include node_modules in the clean plan',
+    '  dev-soul report --markdown            Print a markdown project report',
     '  dev-soul setup [--dry-run]            Create safe project defaults and npm scripts',
     '  dev-soul fix [--dry-run]              Alias for setup',
     '  dev-soul ci [--dry-run]               Create a GitHub Actions quality gate',

@@ -3,12 +3,14 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { loadConfig } = require('./config');
+const { inspectEnv } = require('./env');
 const { collectProjectProfile } = require('./project-profile');
 
 async function runDoctor(cwd, options = {}) {
-  const [config, profile] = await Promise.all([
+  const [config, profile, env] = await Promise.all([
     loadConfig(cwd),
-    collectProjectProfile(cwd)
+    collectProjectProfile(cwd),
+    inspectEnv(cwd)
   ]);
 
   const checks = await Promise.all([
@@ -24,6 +26,7 @@ async function runDoctor(cwd, options = {}) {
     checkPackageManager(profile, config.packageManager.allowMissingLockfile),
     checkSingleLockfile(profile),
     ...await checkForbiddenFiles(cwd, config.forbiddenFiles || []),
+    checkEnvExample(env),
     checkGitIgnoreCoversNodeModules(cwd),
     checkEnginesNode(profile.packageJson),
     checkDuplicateDependencies(profile.packageJson),
@@ -36,6 +39,7 @@ async function runDoctor(cwd, options = {}) {
     cwd,
     config,
     profile,
+    env,
     checks,
     summary,
     ok: summary.failed === 0 && (!options.strict || summary.warned === 0)
@@ -149,19 +153,44 @@ function checkSingleLockfile(profile) {
 }
 
 async function checkForbiddenFiles(cwd, files) {
+  const gitignore = await readGitIgnore(cwd);
   return Promise.all(files.map(async (file) => {
     try {
       await fs.access(path.join(cwd, file));
-      return fail(`forbidden file: ${file}`, `Remove ${file} from the repository and commit an example file instead.`);
+      if (gitignore.includes(file) || gitignore.includes(`${file}\n`)) {
+        return pass(`secret file protected: ${file}`);
+      }
+
+      return fail(`secret file protected: ${file}`, `Add ${file} to .gitignore or remove it from the project root.`);
     } catch {
-      return pass(`forbidden file absent: ${file}`);
+      return pass(`secret file absent: ${file}`);
     }
   }));
 }
 
+function checkEnvExample(env) {
+  if (!env.example.exists) {
+    return warn('environment example', 'Create .env.example so developers know which variables are required.');
+  }
+
+  if (env.example.keys.length === 0) {
+    return pass('environment example');
+  }
+
+  if (!env.local.exists) {
+    return warn('local environment file', 'Create a local .env when this project needs environment variables.');
+  }
+
+  if (env.missing.length > 0) {
+    return warn('local environment matches example', `Missing local keys: ${env.missing.join(', ')}.`);
+  }
+
+  return pass('local environment matches example');
+}
+
 async function checkGitIgnoreCoversNodeModules(cwd) {
   try {
-    const raw = await fs.readFile(path.join(cwd, '.gitignore'), 'utf8');
+    const raw = await readGitIgnore(cwd);
     if (/^node_modules\/?$/m.test(raw)) {
       return pass('.gitignore ignores node_modules');
     }
@@ -169,6 +198,18 @@ async function checkGitIgnoreCoversNodeModules(cwd) {
     return warn('.gitignore ignores node_modules', 'Add node_modules/ to .gitignore.');
   } catch {
     return warn('.gitignore ignores node_modules', 'Create .gitignore with node_modules/.');
+  }
+}
+
+async function readGitIgnore(cwd) {
+  try {
+    return await fs.readFile(path.join(cwd, '.gitignore'), 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return '';
+    }
+
+    throw error;
   }
 }
 

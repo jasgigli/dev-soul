@@ -24,6 +24,8 @@ test('setupProject creates safe defaults without overwriting existing package', 
   assert.equal(packageJson.engines.node, '>=18.18.0');
   assert.equal(packageJson.scripts.doctor, 'dev-soul doctor');
   assert.equal(packageJson.scripts.score, 'dev-soul score');
+  assert.equal(packageJson.scripts.ready, 'dev-soul ready');
   assert.equal(packageJson.scripts.insights, 'dev-soul insights');
+  assert.equal(packageJson.scripts.env, 'dev-soul env');
   assert.equal(await fs.readFile(path.join(cwd, '.gitignore'), 'utf8'), 'node_modules/\n.env\n.DS_Store\n');
 });

@@ -68,6 +68,52 @@ function formatInsights(insights, options = {}) {
   ].join('\n');
 }
 
+function formatEnvReport(env, options = {}) {
+  const color = createColors(options.color);
+  return [
+    color.bold('dev-soul env'),
+    '',
+    `  .env.example: ${env.example.exists ? color.green('found') : color.yellow('missing')}`,
+    `  .env: ${env.local.exists ? color.green('found') : color.yellow('missing')}`,
+    `  required keys: ${env.example.keys.length}`,
+    `  local keys: ${env.local.keys.length}`,
+    `  missing keys: ${env.missing.length ? color.yellow(env.missing.join(', ')) : color.green('none')}`,
+    `  extra local keys: ${env.extra.length ? env.extra.join(', ') : 'none'}`
+  ].join('\n');
+}
+
+function formatCleanResult(result, options = {}) {
+  const color = createColors(options.color);
+  const heading = result.applied ? 'dev-soul clean' : 'dev-soul clean plan';
+
+  if (result.entries.length === 0) {
+    return `${color.bold(heading)}\n\n  ${color.green('Nothing to clean.')}`;
+  }
+
+  return [
+    color.bold(heading),
+    '',
+    ...result.entries.map((entry) => `  ${result.applied ? color.red('REMOVED') : color.yellow('WOULD REMOVE')} ${entry.target} (${entry.type})`),
+    '',
+    result.applied ? color.green(`Removed ${result.entries.length} item(s).`) : 'Run "dev-soul clean --apply" to remove these items.'
+  ].join('\n');
+}
+
+function formatReadyReport(result, options = {}) {
+  const color = createColors(options.color);
+  const status = result.ready ? color.green('READY') : color.red('NOT READY');
+
+  return [
+    color.bold('dev-soul ready'),
+    '',
+    `  status: ${status}`,
+    `  score: ${formatScore(result.doctor.summary.score, color)}`,
+    `  failures: ${color.red(result.doctor.summary.failed)}`,
+    `  warnings: ${color.yellow(result.doctor.summary.warned)}`,
+    `  env missing keys: ${result.env.missing.length ? color.yellow(result.env.missing.join(', ')) : color.green('none')}`
+  ].join('\n');
+}
+
 function formatMarker(status, color) {
   if (status === 'passed') {
     return color.green('PASS');
@@ -94,8 +140,11 @@ function formatScore(score, color) {
 }
 
 module.exports = {
+  formatCleanResult,
   formatDoctorReport,
+  formatEnvReport,
   formatInsights,
   formatProjectProfile,
+  formatReadyReport,
   formatSetupResult
 };
