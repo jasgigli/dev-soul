@@ -1,0 +1,17 @@
+{
+  "requiredFiles": ["package.json", ".gitignore", "README.md"],
+  "recommendedFiles": [".editorconfig", ".env.example"],
+  "requiredPackageScripts": ["test"],
+  "recommendedPackageScripts": ["lint", "build"],
+  "requiredPackageFields": ["name", "version", "license"],
+  "node": {
+    "minimumMajor": 18,
+    "writeVersionFile": true
+  },
+  "packageManager": {
+    "allowMissingLockfile": false
+  },
+  "ci": {
+    "workflow": true
+  }
+}

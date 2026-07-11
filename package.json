@@ -1,0 +1,43 @@
+{
+  "name": "dev-soul",
+  "version": "0.2.0",
+  "description": "A portable developer environment doctor, setup assistant, and quality gate for Node.js projects.",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "dev-soul": "bin/dev-soul.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "lint": "node scripts/check-syntax.js",
+    "build": "node bin/dev-soul.js --version",
+    "doctor": "node bin/dev-soul.js doctor",
+    "doctor:strict": "node bin/dev-soul.js doctor --strict",
+    "doctor:json": "node bin/dev-soul.js doctor --json",
+    "prepare:local": "npm pack --dry-run"
+  },
+  "keywords": [
+    "developer-tooling",
+    "node",
+    "cli",
+    "project-health",
+    "internal-tool",
+    "ci",
+    "quality"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
