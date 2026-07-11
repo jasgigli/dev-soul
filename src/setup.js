@@ -13,6 +13,7 @@ async function setupProject(cwd, options = {}) {
   await createFileIfMissing(cwd, '.nvmrc', `${process.versions.node.split('.')[0]}\n`, actions, options);
   await createReadmeIfMissing(cwd, actions, options);
   await createConfigIfMissing(cwd, actions, options);
+  await ensurePackageMetadata(cwd, actions, options);
   await ensurePackageScripts(cwd, actions, options);
 
   return { cwd, dryRun: Boolean(options.dryRun), actions };
@@ -56,7 +57,9 @@ async function ensurePackageScripts(cwd, actions, options) {
   const wanted = {
     doctor: 'dev-soul doctor',
     'doctor:strict': 'dev-soul doctor --strict',
-    'doctor:json': 'dev-soul doctor --json'
+    'doctor:json': 'dev-soul doctor --json',
+    score: 'dev-soul score',
+    insights: 'dev-soul insights'
   };
 
   let changed = false;
@@ -66,6 +69,36 @@ async function ensurePackageScripts(cwd, actions, options) {
       actions.push({ type: options.dryRun ? 'would update' : 'updated', target: `package.json scripts.${name}` });
       changed = true;
     }
+  }
+
+  if (changed && !options.dryRun) {
+    await fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2) + '\n');
+  }
+}
+
+async function ensurePackageMetadata(cwd, actions, options) {
+  const packagePath = path.join(cwd, 'package.json');
+
+  if (!await exists(packagePath)) {
+    return;
+  }
+
+  const packageJson = await readPackageJson(cwd);
+  let changed = false;
+
+  if (!packageJson.description) {
+    packageJson.description = 'A Node.js project.';
+    actions.push({ type: options.dryRun ? 'would update' : 'updated', target: 'package.json description' });
+    changed = true;
+  }
+
+  if (!packageJson.engines || !packageJson.engines.node) {
+    packageJson.engines = {
+      ...(packageJson.engines || {}),
+      node: '>=18.18.0'
+    };
+    actions.push({ type: options.dryRun ? 'would update' : 'updated', target: 'package.json engines.node' });
+    changed = true;
   }
 
   if (changed && !options.dryRun) {

@@ -20,6 +20,10 @@ test('setupProject creates safe defaults without overwriting existing package', 
   const packageJson = JSON.parse(await fs.readFile(path.join(cwd, 'package.json'), 'utf8'));
 
   assert.ok(result.actions.some((action) => action.target === '.gitignore'));
+  assert.equal(packageJson.description, 'A Node.js project.');
+  assert.equal(packageJson.engines.node, '>=18.18.0');
   assert.equal(packageJson.scripts.doctor, 'dev-soul doctor');
+  assert.equal(packageJson.scripts.score, 'dev-soul score');
+  assert.equal(packageJson.scripts.insights, 'dev-soul insights');
   assert.equal(await fs.readFile(path.join(cwd, '.gitignore'), 'utf8'), 'node_modules/\n.env\n.DS_Store\n');
 });

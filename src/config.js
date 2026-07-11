@@ -11,6 +11,8 @@ const defaultConfig = Object.freeze({
   requiredPackageScripts: ['test'],
   recommendedPackageScripts: ['lint', 'build'],
   requiredPackageFields: ['name', 'version', 'license'],
+  recommendedPackageFields: ['description'],
+  forbiddenFiles: ['.env'],
   node: {
     minimumMajor: 18,
     writeVersionFile: true

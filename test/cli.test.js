@@ -11,3 +11,9 @@ test('parseArgs separates command and flags', () => {
   assert.equal(parsed.flags.json, true);
   assert.equal(parsed.flags.strict, true);
 });
+
+test('parseArgs supports flag values', () => {
+  const parsed = parseArgs(['doctor', '--format=json']);
+
+  assert.equal(parsed.flags.format, 'json');
+});

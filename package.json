@@ -1,6 +1,6 @@
 {
   "name": "dev-soul",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A portable developer environment doctor, setup assistant, and quality gate for Node.js projects.",
   "type": "commonjs",
   "main": "src/index.js",
@@ -21,6 +21,7 @@
     "doctor": "node bin/dev-soul.js doctor",
     "doctor:strict": "node bin/dev-soul.js doctor --strict",
     "doctor:json": "node bin/dev-soul.js doctor --json",
+    "score": "node bin/dev-soul.js score",
     "prepare:local": "npm pack --dry-run"
   },
   "keywords": [

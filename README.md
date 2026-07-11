@@ -1,6 +1,6 @@
 # dev-soul
 
-`dev-soul` is a zero-dependency developer companion for Node.js projects. It gives every project the same health check, setup helper, project score, and CI quality gate.
+`dev-soul` is a zero-dependency developer companion for Node.js projects. It gives every project the same colorful health check, setup helper, project score, dependency overview, script explorer, and CI quality gate.
 
 ## Install
 
@@ -38,7 +38,11 @@ It is useful for:
 dev-soul doctor             # validate project health
 dev-soul doctor --strict    # fail on warnings too
 dev-soul doctor --json      # machine-readable report
+dev-soul doctor --no-color  # plain output for logs
 dev-soul score              # print a 0-100 project health score
+dev-soul insights           # show package, script, and dependency overview
+dev-soul scripts            # list package scripts
+dev-soul deps               # summarize dependency counts and duplicates
 dev-soul setup              # create safe project defaults
 dev-soul setup --dry-run    # preview setup changes
 dev-soul fix                # alias for setup
@@ -70,6 +74,7 @@ It can add:
 - `README.md`
 - `dev-soul.config.json`
 - npm scripts for `doctor`, `doctor:strict`, and `doctor:json`
+- npm scripts for `score` and `insights`
 
 ## Health checks
 
@@ -82,7 +87,13 @@ It can add:
 - important package fields exist
 - required npm scripts exist
 - recommended npm scripts exist
+- the default placeholder npm test script has been replaced
+- package metadata such as `description` exists
+- `engines.node` is configured
 - package manager lockfile exists
+- only one lockfile is present
+- `.env` is not committed
+- dependencies are not duplicated between `dependencies` and `devDependencies`
 - `.gitignore` ignores `node_modules`
 - GitHub Actions workflow exists
 
@@ -100,6 +111,20 @@ dev-soul doctor
 Summary: 12/15 passed, 3 warnings, 0 failures
 Score: 80/100
 ```
+
+In supported terminals, `PASS` is green, `WARN` is yellow, and `FAIL` is red. Use `--no-color` or the `NO_COLOR=1` environment variable for plain text output.
+
+## Insights
+
+Use this when you quickly want to understand a project:
+
+```bash
+npx dev-soul insights
+npx dev-soul scripts
+npx dev-soul deps
+```
+
+These commands help during onboarding, project reviews, and debugging strange Node.js setups.
 
 ## CI
 
@@ -134,6 +159,8 @@ Default config:
   "requiredPackageScripts": ["test"],
   "recommendedPackageScripts": ["lint", "build"],
   "requiredPackageFields": ["name", "version", "license"],
+  "recommendedPackageFields": ["description"],
+  "forbiddenFiles": [".env"],
   "node": {
     "minimumMajor": 18,
     "writeVersionFile": true
@@ -154,7 +181,9 @@ Default config:
   "scripts": {
     "doctor": "dev-soul doctor",
     "doctor:strict": "dev-soul doctor --strict",
-    "doctor:json": "dev-soul doctor --json"
+    "doctor:json": "dev-soul doctor --json",
+    "score": "dev-soul score",
+    "insights": "dev-soul insights"
   }
 }
 ```

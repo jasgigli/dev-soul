@@ -53,14 +53,19 @@ async function detectPackageManager(cwd) {
     ['yarn', 'yarn.lock'],
     ['bun', 'bun.lockb']
   ];
+  const found = [];
 
   for (const [name, lockfile] of lockfiles) {
     if (await exists(path.join(cwd, lockfile))) {
-      return { name, lockfile };
+      found.push({ name, lockfile });
     }
   }
 
-  return { name: null, lockfile: null };
+  return {
+    name: found[0] ? found[0].name : null,
+    lockfile: found[0] ? found[0].lockfile : null,
+    lockfiles: found
+  };
 }
 
 async function detectGit(cwd) {
@@ -75,7 +80,9 @@ async function detectCommonFiles(cwd) {
     '.gitignore',
     '.editorconfig',
     '.env.example',
+    '.env',
     '.nvmrc',
+    'node_modules',
     'dev-soul.config.json',
     '.github/workflows/dev-soul.yml'
   ];

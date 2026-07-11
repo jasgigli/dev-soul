@@ -17,10 +17,16 @@ async function runDoctor(cwd, options = {}) {
     checkNodeVersion(profile.node, config.node.minimumMajor),
     checkPackageJson(profile.packageJson),
     ...checkPackageFields(profile.packageJson, config.requiredPackageFields || []),
+    ...checkPackageFields(profile.packageJson, config.recommendedPackageFields || [], 'recommended'),
     ...checkScripts(profile.packageJson, config.requiredPackageScripts || []),
     ...checkRecommendedScripts(profile.packageJson, config.recommendedPackageScripts || []),
+    checkUsefulTestScript(profile.packageJson),
     checkPackageManager(profile, config.packageManager.allowMissingLockfile),
+    checkSingleLockfile(profile),
+    ...await checkForbiddenFiles(cwd, config.forbiddenFiles || []),
     checkGitIgnoreCoversNodeModules(cwd),
+    checkEnginesNode(profile.packageJson),
+    checkDuplicateDependencies(profile.packageJson),
     checkWorkflow(profile, config.ci && config.ci.workflow)
   ]);
 
@@ -77,17 +83,18 @@ function checkPackageJson(packageJson) {
   return fail('package.json exists', 'Run npm init or move to a Node project root.');
 }
 
-function checkPackageFields(packageJson, fields) {
+function checkPackageFields(packageJson, fields, level = 'required') {
   if (!packageJson.exists) {
     return fields.map((field) => fail(`package field: ${field}`, 'package.json is missing.'));
   }
 
   return fields.map((field) => {
-    if (packageJson.data[field]) {
+    if (readPackageField(packageJson.data, field)) {
       return pass(`package field: ${field}`);
     }
 
-    return warn(`package field: ${field}`, `Add "${field}" to package.json.`);
+    const advice = `Add "${field}" to package.json.`;
+    return level === 'required' ? warn(`package field: ${field}`, advice) : warn(`recommended package field: ${field}`, advice);
   });
 }
 
@@ -129,6 +136,29 @@ function checkPackageManager(profile, allowMissingLockfile) {
   return fail('package manager lockfile', 'Commit package-lock.json, pnpm-lock.yaml, yarn.lock, or bun.lockb.');
 }
 
+function checkSingleLockfile(profile) {
+  const lockfiles = profile.packageManager.lockfiles || [];
+  if (lockfiles.length <= 1) {
+    return pass('single package manager lockfile');
+  }
+
+  return warn(
+    'single package manager lockfile',
+    `Multiple lockfiles found: ${lockfiles.map((item) => item.lockfile).join(', ')}. Keep one package manager per project.`
+  );
+}
+
+async function checkForbiddenFiles(cwd, files) {
+  return Promise.all(files.map(async (file) => {
+    try {
+      await fs.access(path.join(cwd, file));
+      return fail(`forbidden file: ${file}`, `Remove ${file} from the repository and commit an example file instead.`);
+    } catch {
+      return pass(`forbidden file absent: ${file}`);
+    }
+  }));
+}
+
 async function checkGitIgnoreCoversNodeModules(cwd) {
   try {
     const raw = await fs.readFile(path.join(cwd, '.gitignore'), 'utf8');
@@ -148,6 +178,55 @@ function checkWorkflow(profile, enabled) {
   }
 
   return warn('ci workflow configured', 'Run "dev-soul ci" to create a GitHub Actions quality gate.');
+}
+
+function checkUsefulTestScript(packageJson) {
+  if (!packageJson.exists) {
+    return warn('test script is useful', 'package.json is missing.');
+  }
+
+  const testScript = packageJson.data.scripts && packageJson.data.scripts.test;
+  if (!testScript) {
+    return fail('test script is useful', 'Add a real test script.');
+  }
+
+  if (/no test specified|exit 1/i.test(testScript)) {
+    return warn('test script is useful', 'Replace the default npm test placeholder with a real test command.');
+  }
+
+  return pass('test script is useful');
+}
+
+function checkEnginesNode(packageJson) {
+  if (!packageJson.exists) {
+    return warn('package engines.node', 'package.json is missing.');
+  }
+
+  if (packageJson.data.engines && packageJson.data.engines.node) {
+    return pass('package engines.node');
+  }
+
+  return warn('package engines.node', 'Add engines.node so developers and CI use compatible Node versions.');
+}
+
+function checkDuplicateDependencies(packageJson) {
+  if (!packageJson.exists) {
+    return warn('no duplicate dependencies', 'package.json is missing.');
+  }
+
+  const dependencies = packageJson.data.dependencies || {};
+  const devDependencies = packageJson.data.devDependencies || {};
+  const duplicates = Object.keys(dependencies).filter((name) => devDependencies[name]);
+
+  if (duplicates.length === 0) {
+    return pass('no duplicate dependencies');
+  }
+
+  return warn('no duplicate dependencies', `Move duplicate entries to one dependency section: ${duplicates.join(', ')}.`);
+}
+
+function readPackageField(data, field) {
+  return field.split('.').reduce((value, key) => value && value[key], data);
 }
 
 function summarize(checks, strict = false) {
